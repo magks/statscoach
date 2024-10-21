@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import '../services/database_helper.dart';
-import 'shot_recording_screen.dart';
+import 'package:stats_coach/screens/dynamic_player_session_screen.dart';
+//import 'package:stats_coach/screens/shot_recording_enhanced_generic_screen.dart';
+import 'package:stats_coach/services/database_helper.dart';
+import 'package:stats_coach/services/export_service.dart';
 import 'shot_list_screen.dart';
-import 'shot_chart_screen.dart';
-import 'team_management_screen.dart';
-import '../main.dart'; // Import to access the isInDebugMode flag
+import 'package:stats_coach/main.dart'; // Import to access the isInDebugMode flag
+
 class MainScreen extends StatelessWidget {
-  final DatabaseHelper dbHelper = DatabaseHelper();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -18,15 +18,15 @@ class MainScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ElevatedButton(
+/*            ElevatedButton(
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => TeamManagementScreen()),
+                  MaterialPageRoute(builder: (context) => PeopleManagementScreen()),
                 );
               },
-              child: Text('Manage Team'),
-            ),
+              child: Text(PeopleManagementScreen.DefaultLinkText),
+            ),*/
             SizedBox(height: 16.0),
             ElevatedButton(
               onPressed: () {
@@ -39,7 +39,7 @@ class MainScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ShotRecordingScreen()),
+                  MaterialPageRoute(builder: (context) => DynamicPlayerSessionScreen()),
                 );
               },
               child: Text('Record Shot'),
@@ -55,7 +55,7 @@ class MainScreen extends StatelessWidget {
               child: Text('View Statistics'),
             ),
             SizedBox(height: 16.0),
-            ElevatedButton(
+/*            ElevatedButton(
               onPressed: () {
                 Navigator.push(
                   context,
@@ -63,12 +63,13 @@ class MainScreen extends StatelessWidget {
                 );
               },
               child: Text('View Shot Chart'),
-            ),
+            ),*/
             SizedBox(height: 16.0),
             ElevatedButton(
               onPressed: () async {
                 // Export data as CSV
-                String filePath = await dbHelper.exportShotsToCSV();
+                ExportService exportSvc = ExportService();
+                String filePath = await exportSvc.exportShotsToCSV();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Data exported to $filePath')),
                 );
@@ -79,13 +80,26 @@ class MainScreen extends StatelessWidget {
               SizedBox(height: 32.0),
               ElevatedButton(
                 onPressed: () async {
-                  await dbHelper.clearDatabase();
+                  await DatabaseHelper.instance.clearDatabase();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Database cleared')),
                   );
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                 child: Text('Clear Database (Dev Only)'),
+              ),
+            ],
+            if (isInDebugMode) ...[
+              SizedBox(height: 32.0),
+              ElevatedButton(
+                onPressed: () async {
+                  await DatabaseHelper.instance.addSamplePlayers();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Database cleared')),
+                  );
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: Text('Add Example Players (Dev Only)'),
               ),
             ],
           ],

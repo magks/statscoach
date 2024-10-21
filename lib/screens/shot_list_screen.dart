@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import '../services/database_helper.dart';
-import '../models/shot.dart';
-import '../models/player.dart';
+import '../models/shot.dart';  // Import the updated Shot model
+import '../services/database_helper.dart'; // Import the DatabaseHelper to access data
 
 class ShotListScreen extends StatefulWidget {
   @override
@@ -9,9 +8,8 @@ class ShotListScreen extends StatefulWidget {
 }
 
 class _ShotListScreenState extends State<ShotListScreen> {
-  final DatabaseHelper dbHelper = DatabaseHelper();
+  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
   List<Shot> shots = [];
-  Map<int, String> playerNames = {};
 
   @override
   void initState() {
@@ -20,11 +18,17 @@ class _ShotListScreenState extends State<ShotListScreen> {
   }
 
   Future<void> _loadShots() async {
-    List<Shot> shotList = await dbHelper.getShots();
-    List<Player> playerList = await dbHelper.getPlayers();
+    final db = await _dbHelper.database; // First, await the database instance
+    final List<Map<String, dynamic>> shotMaps = await db.query('shots'); // Then perform the query
+
+    debugPrint(
+        'number of shots loaded: $shotMaps'
+    );
     setState(() {
-      shots = shotList;
-      playerNames = {for (var player in playerList) player.id!: player.name};
+      shots = shotMaps.map((map) => Shot.fromMap(map)).toList();
+      debugPrint(
+        'number of shots loaded: $shots'
+      );
     });
   }
 
@@ -32,35 +36,33 @@ class _ShotListScreenState extends State<ShotListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Recorded Shots'),
+        title: Text('Shot List'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: shots.isEmpty
-            ? Center(child: Text('No shots recorded'))
-            : ListView.builder(
-                itemCount: shots.length,
-                itemBuilder: (context, index) {
-                  final shot = shots[index];
-                  return ListTile(
-                    title: Text('Player: ${playerNames[shot.playerId]}'),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Shot Type: ${shot.shotType}'),
-                        Text(
-                            'Location: (${shot.xLocation.toStringAsFixed(2)}, ${shot.yLocation.toStringAsFixed(2)})'),
-                        Text('Blocked: ${shot.wasBlocked ? "Yes" : "No"}'),
-                        Text(
-                            'Involved Dribble: ${shot.involvedDribble ? "Yes" : "No"}'),
-                        Text('Time: ${shot.timestamp}'),
-                      ],
-                    ),
-                  );
-                },
-              ),
-      ),
+      body: shots.isEmpty
+          ? Center(child: CircularProgressIndicator())
+          : ListView.builder(
+              itemCount: shots.length,
+              itemBuilder: (context, index) {
+                final shot = shots[index];
+                return ListTile(
+                  title: Text('Shot ID: ${shot.id}'),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Player ID: ${shot.playerId}'),
+                      Text('Shot Type: ${shot.shotType ?? 'Unknown'}'),
+                      Text('Blocked: ${shot.wasBlocked == true ? "Yes" : "No"}'),
+                      Text('Involved Dribble: ${shot.involvedDribble == true ? "Yes" : "No"}'),
+                      Text('Success: ${shot.success == true ? "Yes" : "No"}'),
+                      Text('Timestamp: ${shot.timestamp.toIso8601String()}'),
+                    ],
+                  ),
+                  onTap: () {
+                    // Handle tap event if needed, e.g., navigate to shot details screen
+                  },
+                );
+              },
+            ),
     );
   }
 }
-

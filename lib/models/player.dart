@@ -1,23 +1,52 @@
 class Player {
-  final int? id; // Nullable because it will be null when a player is first created
+  final int?  id;
   final String name;
-  final String position; // Optional: You can add more attributes like position, jersey number, etc.
+  final int? jerseyNumber;
+  final String? position;
+  final double? height;
+  final double? weight;
+  final int? age;
+  final int?  teamId;
+  final String? photo;
 
-  Player({this.id, required this.name, this.position = ''});
+  const Player({
+    this.id,
+    required this.name,
+    this.jerseyNumber,
+    this.position,
+    this.height,
+    this.weight,
+    this.age,
+    this.teamId,
+    this.photo,
+  });
 
-  // Convert a Player into a Map. The keys must correspond to the names of the columns in the database.
+  // Database conversion methods
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'name': name,
+      'jerseyNumber': jerseyNumber,
       'position': position,
+      'height': height,
+      'weight': weight,
+      'age': age,
+      'teamId': teamId,
+      'photo': photo,
     };
   }
 
-  // Implement toString to make it easier to see information about each player when using the print statement.
-  @override
-  String toString() {
-    return 'Player{id: $id, name: $name, position: $position}';
+  factory Player.fromMap(Map<String, dynamic> map) {
+    return Player(
+      id: map['id'],
+      name: map['name'],
+      jerseyNumber: map['jerseyNumber'],
+      position: map['position'],
+      height: map['height'],
+      weight: map['weight'],
+      age: map['age'],
+      teamId: map['teamId'],
+      photo: map['photo'],
+    );
   }
 }
-

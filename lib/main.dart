@@ -1,10 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:stats_coach/blocs/session_bloc.dart';
 import 'dart:io';
+import 'package:stats_coach/routing/go_router_config.dart';
 
-import 'package:stats_coach/screens/main_screen.dart'; // Import dart:io to use Platform class
+import 'package:stats_coach/screens/main_screen.dart';
+//import 'package:stats_coach/screens/main_screen_dev.dart'; // Import dart:io to use Platform class
 
 const bool isInDebugMode = kDebugMode;//!bool.fromEnvironment("dart.vm.product");
 void main() {
@@ -19,7 +23,16 @@ void main() {
     databaseFactory = databaseFactoryFfi;
   }
 
-  runApp(StatsCoachApp());
+  runApp(
+    MultiBlocProvider(
+        providers: [
+          BlocProvider<SessionBloc>(
+            create: (context) => SessionBloc(),
+          ),
+        ],
+        child: StatsCoachApp()
+    )
+  );
 }
 
 bool isDesktop() {
@@ -28,14 +41,16 @@ bool isDesktop() {
 }
 
 class StatsCoachApp extends StatelessWidget {
+  const StatsCoachApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Stats Coach',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: MainScreen(),
+    return MaterialApp.router(
+          title: 'Stats Coach',
+          theme: ThemeData(
+            primarySwatch: Colors.blue,
+          ),
+          routerConfig: goRouterConfig,
     );
   }
 }
