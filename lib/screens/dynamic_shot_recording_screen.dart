@@ -7,6 +7,7 @@ import 'package:stats_coach/blocs/session_events.dart';
 import 'package:stats_coach/blocs/session_state.dart';
 import 'package:stats_coach/models/training_set.dart';
 import 'package:stats_coach/viewmodels/training_set_view_model.dart';
+import 'package:stats_coach/widgets/set_info_form.dart';
 import 'package:stats_coach/widgets/toasty_snack_bar.dart';
 import '../models/player.dart';
 import '../models/shot.dart';
@@ -46,6 +47,8 @@ class _ShotRecordingScreenV3State extends State<ShotRecordingScreenV3> {
   static const double _collapsedSetInfoFormBorderRadius = 100;
 
   bool _isFormCollapsed = true;
+  bool _isExpanded = false;
+
 
   @override
   void initState() {
@@ -77,11 +80,28 @@ class _ShotRecordingScreenV3State extends State<ShotRecordingScreenV3> {
     _totalController.text = totalShots.toString();
   }
 
-  Future<void> _loadPlayers() async {
+  Future<List<Player>> _loadPlayersAsync() async {
     final db = await _dbHelper.database;
-    final List<Map<String, dynamic>> playerMaps = await db.query('players');
-    var ps = playerMaps.map((map) => Player.fromMap(map)).toList();
-    players = ps;
+    return db.query('players').then((playerMaps) =>
+        playerMaps.map((map) => Player.fromMap(map)).toList()
+    );
+    //final List<Map<String, dynamic>> playerMaps = await db.query('players');
+    //return var ps = playerMaps.map((map) => Player.fromMap(map)).toList();
+    //final List<Map<String, dynamic>> playerMaps = await db.query('players');
+    //var ps = playerMaps.map((map) => Player.fromMap(map)).toList();
+    //players = ps;
+  }
+
+  Future _loadPlayers() async {
+    final db = await _dbHelper.database;
+    players = await db.query('players').then((playerMaps) =>
+        playerMaps.map((map) => Player.fromMap(map)).toList()
+    );
+    //final List<Map<String, dynamic>> playerMaps = await db.query('players');
+    //return var ps = playerMaps.map((map) => Player.fromMap(map)).toList();
+    //final List<Map<String, dynamic>> playerMaps = await db.query('players');
+    //var ps = playerMaps.map((map) => Player.fromMap(map)).toList();
+    //players = ps;
   }
 
   // Dispatch the updated session state when the user records a shot
@@ -105,12 +125,19 @@ class _ShotRecordingScreenV3State extends State<ShotRecordingScreenV3> {
     });
   }
 
+  void _dedupPlayerNames(String playerName, int playerId) {
+    context
+        .read<SessionBloc>()
+        .add(DedupPlayerDisplayNames(Player(name: playerName, id: playerId)));
+  }
+
   // Dispatch the update when the user selects a player, position, or drill
   void _updateTrainingSet(
       {int? id,
         int? campId,
         int? playerId,
         String? playerName,
+        String? playerDisplayName,
         bool? isDummyName,
         DateTime? startTimestamp,
         DateTime? endTimestamp,
@@ -119,7 +146,9 @@ class _ShotRecordingScreenV3State extends State<ShotRecordingScreenV3> {
         String? drill,
         String? location,
         int? madeShots,
-        int? totalShots}) {
+        int? totalShots,
+        bool? isSetInfoFormExpanded,
+      }) {
 
     setState(() {
       widget.trainingSet = widget.trainingSet.copyWith(
@@ -127,6 +156,7 @@ class _ShotRecordingScreenV3State extends State<ShotRecordingScreenV3> {
         campId: campId ?? widget.trainingSet.campId,
         playerId: playerId ?? widget.trainingSet.playerId,
         playerName: playerName ?? widget.trainingSet.playerName,
+        playerDisplayName: playerDisplayName ?? widget.trainingSet.playerDisplayName,
         isDummyName: isDummyName ?? widget.trainingSet.isDummyName,
         startTimestamp: startTimestamp ?? widget.trainingSet.startTimestamp,
         endTimestamp: endTimestamp ?? widget.trainingSet.endTimestamp,
@@ -136,6 +166,7 @@ class _ShotRecordingScreenV3State extends State<ShotRecordingScreenV3> {
         location: location ?? widget.trainingSet.location,
         madeShots: madeShots ?? widget.trainingSet.madeShots,
         totalShots: totalShots ?? widget.trainingSet.totalShots,
+        isSetInfoFormExpanded: isSetInfoFormExpanded ?? widget.trainingSet.isSetInfoFormExpanded,
       );
       // Send the updated training set to the SessionBloc
       context
@@ -143,54 +174,6 @@ class _ShotRecordingScreenV3State extends State<ShotRecordingScreenV3> {
           .add(TrainingSetViewModelUpdated(widget.tabIndex, widget.trainingSet));
     });
 
-  }
-
-  int _sortPlayers(Player a, Player b) {
-    // Split the names into first and last name parts
-    List<String> nameA = a.name.split(' ');
-    List<String> nameB = b.name.split(' ');
-
-    String lastNameA = nameA.last.toLowerCase();
-    String lastNameB = nameB.last.toLowerCase();
-
-    // Compare by last name
-    int lastNameComparison = lastNameA.compareTo(lastNameB);
-
-    if (lastNameComparison != 0) {
-      return lastNameComparison; // Return comparison of last names
-    } else {
-      // If last names are the same, compare by first name
-      String firstNameA = nameA.first.toLowerCase();
-      String firstNameB = nameB.first.toLowerCase();
-      return firstNameA
-          .compareTo(firstNameB); // Return comparison of first names
-    }
-  }
-
-  List<Player> _getSuggestions(String query) {
-    if (query.isEmpty) {
-      return players;
-    }
-
-    String queryLower = query.toLowerCase();
-    // Filter players whose first or last name begins with the query
-    List<Player> beginsWithPlayers = players.where((player) {
-      return player.name.toLowerCase().startsWith(queryLower) ||
-          player.name.split(' ').last.toLowerCase().startsWith(queryLower);
-    }).toList();
-
-    // Get the rest of of the players
-    var restPlayers = players.toSet().difference(beginsWithPlayers.toSet());
-    // Filter the rest of the players based on the query
-    var containsPlayers = restPlayers.where((player) {
-      return player.name.toLowerCase().contains(query.toLowerCase());
-    }).toList();
-
-    // Sort the filtered players by their last name, and tie-break by first name
-    beginsWithPlayers.sort(_sortPlayers);
-    containsPlayers.sort(_sortPlayers);
-
-    return beginsWithPlayers; // + containsPlayers;
   }
 
   void _endSet() {
@@ -283,27 +266,19 @@ class _ShotRecordingScreenV3State extends State<ShotRecordingScreenV3> {
             children: [
               Stack(children: [
                 Positioned(
-                  child: _setControlColumn(height , width - 52),
+                 child: _setControlColumn(height , width - 52),
                 ),
+             // _setControlColumn(height , width - 52),
                 _setInfoForm(currentSet, height, width),
 
-              ])
+              ]
+              )
             ],
           ));
     });
   }
 
-  // These methods retrieve drills/locations based on position/category (placeholder implementation)
-  List<String> _getDrillsForPositionAndCategory(
-      String? position, String? category) {
-    // Logic to fetch drills based on position and shot category
-    return ['Drill 1', 'Drill 2', 'Drill 3'];
-  }
 
-  List<String> _getLocationsForDrill(String? drill) {
-    // Logic to fetch locations based on the selected drill
-    return ['Location 1', 'Location 2', 'Location 3'];
-  }
 
   Widget _madeShotButton(minHeight, minWidth) {
     return ElevatedButton(
@@ -393,8 +368,67 @@ class _ShotRecordingScreenV3State extends State<ShotRecordingScreenV3> {
       ),
     );
   }
-
+  
   Widget _setInfoForm(TrainingSetViewModel currentSet, double ctxHeight, double ctxWidth) {
+    // form is expanded if
+    return ExpansionTile(
+        controller: _setInfoExpansionTileController,
+        collapsedIconColor: const Color(0xFF000000),
+        backgroundColor: Colors.blue.shade100,
+        collapsedBackgroundColor: Colors.blue.shade100,
+        shape: const RoundedRectangleBorder(
+            side: BorderSide(width: 1, color: _setInfoFormBorderColor,
+                strokeAlign: BorderSide.strokeAlignInside),
+            // side: BorderSide.lerp(BorderSide.none, BorderSide(), 0.9),
+            borderRadius: //BorderRadius.circular(15),
+            BorderRadius.only(
+                topLeft: Radius.circular(17),
+                topRight: Radius.circular(17),
+                bottomLeft: Radius.circular(5),
+                bottomRight: Radius.circular(5))),
+        collapsedShape: RoundedRectangleBorder(
+          side: BorderSide(width: 1, color: _setInfoFormBorderColor,
+              strokeAlign: BorderSide.strokeAlignInside),
+          //side: BorderSide.lerp(BorderSide.none, BorderSide(), 0.9),
+          borderRadius: BorderRadius.circular(_collapsedSetInfoFormBorderRadius),
+        ),
+        dense: true,
+        initiallyExpanded: currentSet.isSetInfoFormExpanded ?? false,
+        onExpansionChanged: (bool expanded) {
+          setState(() {
+            _updateTrainingSet(isSetInfoFormExpanded: expanded);
+            debugPrint("initiallyExpanded:" + (_isExpanded? "true": "false"));
+          });
+        },
+        //title: const Text('Set Info: Tap to expand/collapse'),
+        title: const Text.rich(
+          TextSpan(
+            children: <TextSpan>[
+              TextSpan(
+                text: 'Set Info |',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              TextSpan(
+                text: ' Tap to expand/collapse',
+                //style: TextStyle(fontStyle: FontStyle.italic),
+              )
+            ],
+          ),
+        ),
+        //subtitle: Text('Tap arrow to expand/collapse'),
+        children: [
+          SetInfoForm(
+            formKey: _setInfoFormKey,
+            dedupPlayerNames: _dedupPlayerNames,
+            //players: _loadPlayersAsync(),
+            currentSet: currentSet,
+            updateTrainingSet: _updateTrainingSet,
+            expansionTileController: _setInfoExpansionTileController,
+          )
+    ]);
+  }
+
+  Widget _setInfoForm_old(TrainingSetViewModel currentSet, double ctxHeight, double ctxWidth) {
     return ExpansionTile(
         controller: _setInfoExpansionTileController,
         collapsedIconColor: const Color(0xFF000000),
@@ -477,7 +511,7 @@ class _ShotRecordingScreenV3State extends State<ShotRecordingScreenV3> {
                     ),
                   ),*/
                   suggestionsCallback: (String pattern) {
-                    return _getSuggestions(pattern);
+                    return null;//_getSuggestions(pattern);
                   },
                   itemBuilder: (context, Player suggestion) {
                     return ListTile(
@@ -492,8 +526,13 @@ class _ShotRecordingScreenV3State extends State<ShotRecordingScreenV3> {
                       _updateTrainingSet(
                         playerId: suggestion.id,
                         playerName: suggestion.name,
+                        playerDisplayName: suggestion.name,
                         isDummyName: false,
                       );
+                      context
+                          .read<SessionBloc>()
+                          .add(DedupPlayerDisplayNames(Player(name: suggestion.name, id: suggestion.id)));
+
                     });
                   },
                   emptyBuilder: (context) => const ListTile(
@@ -539,7 +578,7 @@ class _ShotRecordingScreenV3State extends State<ShotRecordingScreenV3> {
                   onChanged: (String? newDrill) {
                     _updateTrainingSet(drill: newDrill);
                   },
-                  items: _getDrillsForPositionAndCategory(
+                  items: [DropdownMenuItem<String>(value: "any", child: Text("any"))],/*_getDrillsForPositionAndCategory(
                       currentSet.position, currentSet.shotCategory)
                       .map((String drill) {
                     return DropdownMenuItem<String>(
@@ -547,7 +586,7 @@ class _ShotRecordingScreenV3State extends State<ShotRecordingScreenV3> {
                       child: Text(" $drill"),
                     );
                   }).toList(),
-                ),
+                )*/),
                 // Location Dropdown
                 DropdownButtonFormField<String>(
                   value: currentSet.location,
@@ -555,13 +594,19 @@ class _ShotRecordingScreenV3State extends State<ShotRecordingScreenV3> {
                   onChanged: (String? newLocation) {
                     _updateTrainingSet(location: newLocation);
                   },
-                  items: _getLocationsForDrill(currentSet.drill)
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Please select a location";
+                    }
+                    return null;
+                  },
+                  items: [DropdownMenuItem<String>(value: "any", child: Text("any"))],/* _getLocationsForDrill(currentSet.drill)
                       .map((String location) {
                     return DropdownMenuItem<String>(
                       value: location,
                       child: Text(" $location"),
                     );
-                  }).toList(),
+                  }).toList(),*/
                 )
               ]
             ),
@@ -589,14 +634,16 @@ class _ShotRecordingScreenV3State extends State<ShotRecordingScreenV3> {
         Center(
           child: ElevatedButton(
             onPressed:() {
-              // validate set info
-              if (widget.trainingSet.isDummyName ?? false) {
-               // tell user they need to fill out the set info form
-                // and uncollapse the form with validation errors shown on it
-                _showValidationErrors();
-                return ;
+              if (_setInfoExpansionTileController.isExpanded){
+                _validatedEndSet();
               }
-              _endSet();
+              else {
+                _setInfoExpansionTileController.expand();
+                // Wait for the next frame to ensure the form is built
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _validatedEndSet();
+                });
+              }
             },
             style: ElevatedButton.styleFrom(
               side: BorderSide(width: 2.5,
@@ -745,5 +792,36 @@ class _ShotRecordingScreenV3State extends State<ShotRecordingScreenV3> {
       setState(() {
         _isFormCollapsed = false;
       });
+  }
+
+  bool isValidSetInfo() {
+    return _setInfoFormKey.currentState!.validate();
+    // && !(widget.trainingSet.isDummyName ?? false) // not dummy name
+    //     && (widget.trainingSet.position ?? "").isNotEmpty
+    //     && (widget.trainingSet.shotCategory ?? "").isNotEmpty
+    //     && (widget.trainingSet.drill ?? "").isNotEmpty
+    //     && (widget.trainingSet.location ?? "").isNotEmpty
+    //     && true;
+  }
+
+  void _validatedEndSet() {
+    // validate set info
+    if (_setInfoFormKey == null) {
+      debugPrint("setInfoFormKey is null");
+
+      return;
+    }
+    if (_setInfoFormKey.currentState == null) {
+      debugPrint("setInfoFormKey.currentState is null");
+      return;
+    }
+
+    if (!isValidSetInfo()) {
+      // tell user they need to fill out the set info form
+      // and uncollapse the form with validation errors shown on it
+      _showValidationErrors();
+      return;
+    }
+    _endSet();
   }
 }

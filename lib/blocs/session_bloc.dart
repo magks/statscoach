@@ -11,6 +11,7 @@ class SessionBloc extends Bloc<SessionEvent, SessionState> {
     playerId: 0,
     playerName: "Player 1",
     isDummyName: true,
+    isSetInfoFormExpanded: false,
   );
 
 
@@ -59,8 +60,8 @@ class SessionBloc extends Bloc<SessionEvent, SessionState> {
     // either replace first dummy player or add to end
     bool isDummyFound = false;
     final updatedTrainingSetViewModels = state.trainingSets.map((trainingSet) {
-      // if player is dummy, replace with this player
-      if ((trainingSet.isDummyName ?? false)){
+      // if havent found dummy and player is dummy, replace with this player
+      if (!isDummyFound && (trainingSet.isDummyName ?? false)){
         isDummyFound = true;
         return trainingSet.copyWith(
             playerName: event.player.name,

@@ -14,6 +14,7 @@ class TrainingSetViewModel {
   final String? location;
   final int? madeShots;
   final int? totalShots;
+  final bool? isSetInfoFormExpanded;
 
 
   const TrainingSetViewModel({
@@ -32,6 +33,7 @@ class TrainingSetViewModel {
     this.location,
     this.madeShots,
     this.totalShots,
+    this.isSetInfoFormExpanded,
   });
 
   // Database conversion methods
@@ -95,6 +97,7 @@ class TrainingSetViewModel {
     String? location,
     int? madeShots,
     int? totalShots,
+    bool? isSetInfoFormExpanded,
   }) {
     return TrainingSetViewModel(
       id: id ?? this.id,
@@ -112,6 +115,7 @@ class TrainingSetViewModel {
       location: location ?? this.location,
       madeShots: madeShots ?? this.madeShots,
       totalShots: totalShots ?? this.totalShots,
+      isSetInfoFormExpanded: isSetInfoFormExpanded ?? this.isSetInfoFormExpanded,
     );
   }
 }

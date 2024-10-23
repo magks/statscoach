@@ -181,6 +181,7 @@ class _DynamicPlayerSessionScreenState extends State<DynamicPlayerSessionScreen>
             // Add a new player (training set)
 
             final newSet = TrainingSetViewModel(
+                isSetInfoFormExpanded: false,
                 playerName: 'Player ${state.trainingSets.length + 1}',
                 isDummyName: true,
                 startTimestamp: DateTime.now(),
@@ -201,7 +202,10 @@ class _DynamicPlayerSessionScreenState extends State<DynamicPlayerSessionScreen>
             context.read<SessionBloc>().add(UpdateCurrentTab(currentIdxAfterRemove));
             //re-add the initial dummy player tab if last player is removed
             if (state.trainingSets.length == 1) {
+
+              // TODO investigate if the inital training set in the session bloc needs a start time
               final newSet = TrainingSetViewModel(
+                  isSetInfoFormExpanded: false,
                   playerName: 'Player 1',
                   isDummyName: true,
                   startTimestamp: DateTime.now());
