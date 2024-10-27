@@ -9,7 +9,9 @@ class StatsState extends Equatable {
   final DateTimeRange? dateRange;
   final List<Player> selectedPlayers;
   final double overallPercentage;
-  final Map<int, PlayerStatsDetail> playerStatsDetails; // Updated
+  final int totalMadeShots;
+  final int totalShots;
+  final Map<int, PlayerStatsDetail> playerStatsDetails;
   final String? errorMessage;
   final bool isLoading;
 
@@ -18,7 +20,9 @@ class StatsState extends Equatable {
     this.dateRange,
     this.selectedPlayers = const [],
     this.overallPercentage = 0,
-    this.playerStatsDetails = const {}, // Updated
+    this.totalMadeShots = 0,
+    this.totalShots = 0,
+    this.playerStatsDetails = const {},
     this.errorMessage,
     this.isLoading = false,
   });
@@ -28,7 +32,9 @@ class StatsState extends Equatable {
     DateTimeRange? dateRange,
     List<Player>? selectedPlayers,
     double? overallPercentage,
-    Map<int, PlayerStatsDetail>? playerStatsDetails, // Updated
+    int? totalMadeShots,
+    int? totalShots,
+    Map<int, PlayerStatsDetail>? playerStatsDetails,
     String? errorMessage,
     bool? isLoading,
   }) {
@@ -37,7 +43,9 @@ class StatsState extends Equatable {
       dateRange: dateRange ?? this.dateRange,
       selectedPlayers: selectedPlayers ?? this.selectedPlayers,
       overallPercentage: overallPercentage ?? this.overallPercentage,
-      playerStatsDetails: playerStatsDetails ?? this.playerStatsDetails, // Updated
+      totalMadeShots: totalMadeShots ?? this.totalMadeShots,
+      totalShots: totalShots ?? this.totalShots,
+      playerStatsDetails: playerStatsDetails ?? this.playerStatsDetails,
       errorMessage: errorMessage,
       isLoading: isLoading ?? this.isLoading,
     );
@@ -49,7 +57,9 @@ class StatsState extends Equatable {
     dateRange,
     selectedPlayers,
     overallPercentage,
-    playerStatsDetails, // Updated
+    totalMadeShots,
+    totalShots,
+    playerStatsDetails,
     errorMessage,
     isLoading,
   ];

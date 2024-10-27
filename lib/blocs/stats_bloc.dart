@@ -6,12 +6,12 @@ import 'package:stats_coach/models/player.dart';
 import 'package:stats_coach/models/player_stats_detail.dart';
 import 'package:stats_coach/models/training_set.dart';
 import 'package:stats_coach/services/database_helper.dart';
-import 'package:flutter/material.dart';
 
 class StatsBloc extends Bloc<StatsEvent, StatsState> {
   StatsBloc() : super(StatsState()) {
     on<InitializeStats>(_onInitializeStats);
-    on<AddNewPlayer>(_onAddNewPlayer);
+    on<AddNewPlayerToStats>(_onAddNewPlayer);
+    on<RemovePlayerFromStats>(_onRemovePlayer);
     on<UpdateDateRange>(_onUpdateDateRange);
     on<UpdateSelectedPlayers>(_onUpdateSelectedPlayers);
     on<FetchStats>(_onFetchStats);
@@ -24,17 +24,25 @@ class StatsBloc extends Bloc<StatsEvent, StatsState> {
     try {
       final db = await _dbHelper.database;
       List<Map<String, dynamic>> playerMaps = await db.query('players');
-      List<Player> players =
-      playerMaps.map((map) => Player.fromMap(map)).toList();
+      List<Player> players = playerMaps
+          .map((map) => Player.fromMap(map)).toList();
       emit(state.copyWith(players: players));
+      add(FetchStats());
     } catch (e) {
       emit(state.copyWith(errorMessage: 'Failed to load players: $e'));
     }
   }
 
-  void _onAddNewPlayer(AddNewPlayer event, Emitter<StatsState> emit) {
+  void _onAddNewPlayer(AddNewPlayerToStats event, Emitter<StatsState> emit) {
     List<Player> updatedPlayers = List.from(state.players)..add(event.player);
     emit(state.copyWith(players: updatedPlayers));
+    add(FetchStats());
+  }
+
+  void _onRemovePlayer(RemovePlayerFromStats event, Emitter<StatsState> emit) {
+    List<Player> updatedPlayers = List.from(state.players)..remove(event.player);
+    emit(state.copyWith(players: updatedPlayers));
+    add(FetchStats());
   }
 
   void _onUpdateDateRange(UpdateDateRange event, Emitter<StatsState> emit) {
@@ -76,61 +84,83 @@ class StatsBloc extends Bloc<StatsEvent, StatsState> {
         whereArgs: whereArgs.isNotEmpty ? whereArgs : null,
       );
 
-      List<TrainingSet> trainingSets =
-      result.map((map) => TrainingSet.fromMap(map)).toList();
+      List<TrainingSet> trainingSets = result
+          .map((map) => TrainingSet.fromMap(map)).toList();
 
       // Compute overall statistics
-      int totalMadeShots =
-      trainingSets.fold(0, (sum, item) => sum + (item.madeShots ?? 0));
-      int totalShots =
-      trainingSets.fold(0, (sum, item) => sum + (item.totalShots ?? 0));
-      double overallPercentage =
-      totalShots > 0 ? (totalMadeShots / totalShots) * 100 : 0;
+      int totalMadeShots = trainingSets
+          .fold(0, (sum, item) => sum + (item.madeShots ?? 0));
+      int totalShots = trainingSets
+          .fold(0, (sum, item) => sum + (item.totalShots ?? 0));
+      double overallPercentage = totalShots > 0
+          ? (totalMadeShots / totalShots) * 100
+          : 0;
 
       // Compute detailed stats per player
       Map<int, PlayerStatsDetail> playerStatsDetails = {};
 
-      for (var player in state.selectedPlayers) {
+      final playerList = state.selectedPlayers.isEmpty
+        ? state.players
+        : state.selectedPlayers;
+
+      for (var player in playerList) {
         // Filter training sets for this player
         List<TrainingSet> playerSets =
         trainingSets.where((set) => set.playerId == player.id).toList();
 
         // Compute overall stats for this player
-        int playerMadeShots =
-        playerSets.fold(0, (sum, item) => sum + (item.madeShots ?? 0));
-        int playerTotalShots =
-        playerSets.fold(0, (sum, item) => sum + (item.totalShots ?? 0));
+        int playerMadeShots = playerSets
+            .fold(0, (sum, item) => sum + (item.madeShots ?? 0));
+        int playerTotalShots = playerSets
+            .fold(0, (sum, item) => sum + (item.totalShots ?? 0));
         double playerOverallPercentage = playerTotalShots > 0
             ? (playerMadeShots / playerTotalShots) * 100
             : 0;
 
         // Compute stats breakdowns
-        Map<String, double> positionPercentages =
-        _computeBreakdown(playerSets, (set) => set.position);
-        Map<String, double> shotCategoryPercentages =
-        _computeBreakdown(playerSets, (set) => set.shotCategory);
-        Map<String, double> drillPercentages =
-        _computeBreakdown(playerSets, (set) => set.drill);
-        Map<String, double> locationPercentages =
-        _computeBreakdown(playerSets, (set) => set.location);
+        List<String> positions = [];
+        List<double> positionPercentages = [];
+        _computeBreakdownLists(playerSets, (set) => set.position, positions, positionPercentages);
+
+        List<String> shotCategories = [];
+        List<double> shotCategoryPercentages = [];
+        _computeBreakdownLists(playerSets, (set) => set.shotCategory, shotCategories, shotCategoryPercentages);
+
+        List<String> drills = [];
+        List<double> drillPercentages = [];
+        _computeBreakdownLists(playerSets, (set) => set.drill, drills, drillPercentages);
+
+        List<String> locations = [];
+        List<double> locationPercentages = [];
+        _computeBreakdownLists(playerSets, (set) => set.location, locations, locationPercentages);
 
         // Create PlayerStatsDetail
         playerStatsDetails[player.id!] = PlayerStatsDetail(
           playerId: player.id!,
           overallPercentage: playerOverallPercentage,
+          totalMadeShots: playerMadeShots, // Add this
+          totalShots: playerTotalShots, // Add this
+          positions: positions,
           positionPercentages: positionPercentages,
+          shotCategories: shotCategories,
           shotCategoryPercentages: shotCategoryPercentages,
+          drills: drills,
           drillPercentages: drillPercentages,
+          locations: locations,
           locationPercentages: locationPercentages,
         );
+
       }
 
       emit(state.copyWith(
         overallPercentage: overallPercentage,
+        totalMadeShots: totalMadeShots,
+        totalShots: totalShots,
         playerStatsDetails: playerStatsDetails,
         isLoading: false,
         errorMessage: null,
       ));
+
     } catch (e) {
       emit(state.copyWith(
         errorMessage: 'Failed to fetch stats: $e',
@@ -139,9 +169,12 @@ class StatsBloc extends Bloc<StatsEvent, StatsState> {
     }
   }
 
-  // Helper method to compute breakdowns
-  Map<String, double> _computeBreakdown(
-      List<TrainingSet> sets, String? Function(TrainingSet) keySelector) {
+// Helper method to compute breakdowns into lists
+  void _computeBreakdownLists(
+      List<TrainingSet> sets,
+      String? Function(TrainingSet) keySelector,
+      List<String> keysList,
+      List<double> percentagesList) {
     Map<String, int> madeShotsMap = {};
     Map<String, int> totalShotsMap = {};
 
@@ -156,14 +189,16 @@ class StatsBloc extends Bloc<StatsEvent, StatsState> {
           ifAbsent: () => totalShots);
     }
 
-    Map<String, double> percentages = {};
-    totalShotsMap.forEach((key, totalShots) {
+    // Ensure consistent ordering
+    List<String> sortedKeys = madeShotsMap.keys.toList()..sort();
+
+    for (String key in sortedKeys) {
+      int totalShots = totalShotsMap[key] ?? 0;
       int madeShots = madeShotsMap[key] ?? 0;
       double percentage = totalShots > 0 ? (madeShots / totalShots) * 100 : 0;
-      percentages[key] = percentage;
-    });
-
-    return percentages;
+      keysList.add(key);
+      percentagesList.add(percentage);
+    }
   }
 
 }

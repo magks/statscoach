@@ -22,14 +22,24 @@ class InitializeStats extends StatsEvent {
   const InitializeStats();
 }
 
-class AddNewPlayer extends StatsEvent {
+class AddNewPlayerToStats extends StatsEvent {
   final Player player;
 
-  const AddNewPlayer(this.player);
+  const AddNewPlayerToStats(this.player);
 
   @override
   List<Object?> get props => [player];
 }
+
+class RemovePlayerFromStats extends StatsEvent {
+  final Player player;
+
+  const RemovePlayerFromStats(this.player);
+
+  @override
+  List<Object?> get props => [player];
+}
+
 class UpdateSelectedPlayers extends StatsEvent {
   final List<Player> selectedPlayers;
 

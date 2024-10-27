@@ -8,7 +8,6 @@ import 'package:stats_coach/blocs/session_bloc.dart';
 import 'package:stats_coach/blocs/session_events.dart';
 import 'package:stats_coach/blocs/stats_bloc.dart';
 import 'package:stats_coach/blocs/stats_events.dart';
-import 'package:stats_coach/models/training_set.dart';
 import '../models/player.dart'; // Import the Player model
 import '../services/database_helper.dart'; // Import the DatabaseHelper to access data
 
@@ -73,13 +72,14 @@ class _TrainingManagementScreenState extends State<TrainingManagementScreen> {
     // Refresh the player list after adding
     _loadPlayers();
 
-    context.read<StatsBloc>().add(AddNewPlayer(player.copyWith(id: playerId)));
+    context.read<StatsBloc>().add(AddNewPlayerToStats(player.copyWith(id: playerId)));
   }
 
-  Future<void> _deletePlayer(int id) async {
+  // todo don't reload from db, just update player list in place
+  Future<void> _deletePlayer(Player player) async {
     final db = await _dbHelper.database;
-    await db.delete('players', where: 'id = ?', whereArgs: [id]);
-
+    context.read<StatsBloc>().add(RemovePlayerFromStats(player));
+    await db.delete('players', where: 'id = ?', whereArgs: [player.id!]);
     _loadPlayers();
   }
 
@@ -213,7 +213,7 @@ class _TrainingManagementScreenState extends State<TrainingManagementScreen> {
               icon: Icon(Icons.delete),
               tooltip: 'Delete Player',
               onPressed: () {
-                _deletePlayer(player.id!);
+                _deletePlayer(player);
               },
             ),
           ],

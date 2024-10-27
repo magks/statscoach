@@ -5,9 +5,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:stats_coach/blocs/session_bloc.dart';
 import 'package:stats_coach/blocs/session_events.dart';
 import 'package:stats_coach/blocs/session_state.dart';
+import 'package:stats_coach/blocs/stats_bloc.dart';
+import 'package:stats_coach/blocs/stats_events.dart';
 import 'package:stats_coach/models/training_set.dart';
 import 'package:stats_coach/viewmodels/training_set_view_model.dart';
 import 'package:stats_coach/widgets/set_info_form.dart';
+import 'package:stats_coach/widgets/shot_button/shot_button_config.dart';
 import 'package:stats_coach/widgets/toasty_snack_bar.dart';
 import '../models/player.dart';
 import '../models/shot.dart';
@@ -42,6 +45,9 @@ class _ShotRecordingScreenV3State extends State<ShotRecordingScreenV3> {
   String? _selectedDrill;
   String? _selectedLocation;
   late TrainingSetViewModel _currentTrainingSet;
+
+  final _madeConfig = ShotButtonConfig.made();
+  final _missedConfig = ShotButtonConfig.missed();
 
   static const Color _setInfoFormBorderColor = Colors.black87;
   static const double _collapsedSetInfoFormBorderRadius = 100;
@@ -207,9 +213,9 @@ class _ShotRecordingScreenV3State extends State<ShotRecordingScreenV3> {
       madeShots = 0;
       totalShots = 0;
       _updateShotCounterControllers();
-      //     sessionShots.clear();
     });
 
+    context.read<StatsBloc>().add(FetchStats());
     // Optionally show feedback
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Set recorded! Ready for the next set.')),
@@ -280,7 +286,13 @@ class _ShotRecordingScreenV3State extends State<ShotRecordingScreenV3> {
     });
   }
 
-
+  Widget _buildShotButton(ShotButtonConfig config, double height, double width) {
+    return config.buildButton(
+      minHeight: height,
+      minWidth: width,
+      onShotRecorded: _incrementShot,
+    );
+  }
 
   Widget _madeShotButton(minHeight, minWidth) {
     return ElevatedButton(
@@ -619,17 +631,19 @@ class _ShotRecordingScreenV3State extends State<ShotRecordingScreenV3> {
   Widget _setControlColumn(double contextHeight, double contextWidth) {
     double height = contextHeight;
     double width = contextWidth;
+    double shotButtonHeight = height / 3;
+    double shotButtonWidth = width / 3;
     return
       Column(children: [
-        SizedBox(height: height*0.07),
+        SizedBox(height: height*0.12),
         _buildShotCounterRow(),
-        SizedBox(height: height*0.009 ),
+        SizedBox(height: height*0.09 ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _madeShotButton(height / 2, width / 2 ),
-            const SizedBox(width: 20),
-            _missedShotButton(height / 2, width / 2 ),
+            _buildShotButton(_madeConfig, shotButtonHeight, shotButtonWidth),
+            SizedBox(width: width*0.01),
+            _buildShotButton(_missedConfig, shotButtonHeight, shotButtonWidth),
           ],
         ),
         const SizedBox(height: 20),

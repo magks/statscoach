@@ -90,7 +90,10 @@ class SessionBloc extends Bloc<SessionEvent, SessionState> {
     final updatedTrainingSetViewModels = state.trainingSets.map((trainingSet) {
       // if player exists in session, update their name
       if (trainingSet.playerId == event.updatedPlayer.id) {
-        return trainingSet.copyWith(playerName: event.updatedPlayer.name);
+        return trainingSet.copyWith(
+            playerName: event.updatedPlayer.name,
+            playerDisplayName: event.updatedPlayer.name
+        );
       }
       return trainingSet;
     }).toList(growable: false);
