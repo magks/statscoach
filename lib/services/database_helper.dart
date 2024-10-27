@@ -11,7 +11,7 @@ import 'package:stats_coach/models/training_set.dart';
 
 class DatabaseHelper {
   static final _databaseName = "AppDatabase.db";
-  static final _databaseVersion = 2;
+  static final _databaseVersion = 1;
 
   static final tablePlayers = 'players';
   static final tableShots = 'shots';

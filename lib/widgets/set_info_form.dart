@@ -36,13 +36,16 @@ class _SetInfoFormState extends State<SetInfoForm> {
     super.initState();
     _typeAheadController = TextEditingController(text: widget.currentSet.playerName ?? '');
     _loadPlayers();
-    _typeAheadController.addListener(() {
+    /*_typeAheadController.addListener(() {
+      debugPrint("typeAheadController.text=${_typeAheadController.text}");
+      debugPrint("_selectedPlayer?.name=${_selectedPlayer?.name}");
+
       if (_typeAheadController.text != _selectedPlayer?.name) {
         setState(() {
           _selectedPlayer = null;
         });
       }
-    });
+    });*/
   }
 
   @override
@@ -135,7 +138,7 @@ class _SetInfoFormState extends State<SetInfoForm> {
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return "Please select a player";
-                  } else if (_selectedPlayer == null || _selectedPlayer!.name != value) {
+                  } else if (widget.currentSet.playerId == null || (widget.currentSet.isDummyName ?? false)) {
                     return "Please select a valid player from the suggestions";
                   }
                   return null;

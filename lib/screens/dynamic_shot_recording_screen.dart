@@ -189,7 +189,9 @@ class _ShotRecordingScreenV3State extends State<ShotRecordingScreenV3> {
     // record end timestamp
     _updateTrainingSet(endTimestamp: DateTime.now());
     // save set to DB (first convert view model to db model)
-    _dbHelper.recordTrainingSet(TrainingSet.fromMap(widget.trainingSet.toMap()));
+    final trainingSetAsMap = widget.trainingSet.toMap();
+    final trainingSet = TrainingSet.fromMap(trainingSetAsMap);
+    _dbHelper.recordTrainingSet(trainingSet);
 
     // clear shot counter and timestamps from state
     _updateTrainingSet(

@@ -57,9 +57,9 @@ class TrainingSet {
       playerName: map['playerName'],
       isDummyName: map['isDummyName'] == 1 ? true : false,
       startTimestamp: map['startTimestamp'] != null ? DateTime.parse(
-          map['date']) : null,
+          map['startTimestamp']) : null,
       endTimestamp: map['endTimestamp'] != null
-          ? DateTime.parse(map['date'])
+          ? DateTime.parse(map['endTimestamp'])
           : null,
       position: map['position'],
       shotCategory: map['shotCategory'],

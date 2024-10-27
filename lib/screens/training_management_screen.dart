@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:stats_coach/blocs/session_bloc.dart';
 import 'package:stats_coach/blocs/session_events.dart';
+import 'package:stats_coach/blocs/stats_bloc.dart';
+import 'package:stats_coach/blocs/stats_events.dart';
 import 'package:stats_coach/models/training_set.dart';
 import '../models/player.dart'; // Import the Player model
 import '../services/database_helper.dart'; // Import the DatabaseHelper to access data
@@ -58,7 +60,7 @@ class _TrainingManagementScreenState extends State<TrainingManagementScreen> {
     }
 
     final db = await _dbHelper.database;
-    await db.insert(
+    int playerId = await db.insert(
       'players',
       player.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
@@ -70,6 +72,8 @@ class _TrainingManagementScreenState extends State<TrainingManagementScreen> {
 
     // Refresh the player list after adding
     _loadPlayers();
+
+    context.read<StatsBloc>().add(AddNewPlayer(player.copyWith(id: playerId)));
   }
 
   Future<void> _deletePlayer(int id) async {

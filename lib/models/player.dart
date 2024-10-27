@@ -49,4 +49,29 @@ class Player {
       photo: map['photo'],
     );
   }
+
+  // CopyWith method
+  Player copyWith({
+    int? id,
+    String? name,
+    int? jerseyNumber,
+    String? position,
+    double? height,
+    double? weight,
+    int? age,
+    int? teamId,
+    String? photo,
+  }) {
+    return Player(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      jerseyNumber: jerseyNumber ?? this.jerseyNumber,
+      position: position ?? this.position,
+      height: height ?? this.height,
+      weight: weight ?? this.weight,
+      age: age ?? this.age,
+      teamId: teamId ?? this.teamId,
+      photo: photo ?? this.photo,
+    );
+  }
 }

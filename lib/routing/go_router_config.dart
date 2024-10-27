@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:stats_coach/routing/scaffold_with_nav_bar.dart';
 import 'package:stats_coach/screens/dynamic_player_session_screen.dart';
 import 'package:stats_coach/screens/main_screen.dart';
+import 'package:stats_coach/screens/stats_screen.dart';
 import 'package:stats_coach/screens/training_management_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey =
@@ -31,6 +32,7 @@ final GoRouter goRouterConfig = GoRouter(
           // The route branch for the first tab of the bottom navigation bar.
           playersBranch(),
           trainingSessionBranch(),
+          statsBranch(),
 
         ],
     ),
@@ -76,6 +78,18 @@ StatefulShellBranch playersBranch() {
                 ],*/
         ),
       ]          // The route branch for the second tab of the bottom navigation bar.
+  );
+
+}
+
+StatefulShellBranch statsBranch() {
+  return StatefulShellBranch(
+    routes: <RouteBase>[
+      GoRoute(
+        path: '/stats',
+        builder: (BuildContext context, GoRouterState state) => StatsScreen(),
+      ),
+    ],
   );
 }
 

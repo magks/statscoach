@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:stats_coach/blocs/session_bloc.dart';
+import 'package:stats_coach/blocs/stats_bloc.dart';
 import 'dart:io';
 import 'package:stats_coach/routing/go_router_config.dart';
 
@@ -28,6 +29,9 @@ void main() {
         providers: [
           BlocProvider<SessionBloc>(
             create: (context) => SessionBloc(),
+          ),
+          BlocProvider<StatsBloc>(
+            create: (context) => StatsBloc(),
           ),
         ],
         child: StatsCoachApp()
