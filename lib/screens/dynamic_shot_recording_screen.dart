@@ -631,13 +631,13 @@ class _ShotRecordingScreenV3State extends State<ShotRecordingScreenV3> {
   Widget _setControlColumn(double contextHeight, double contextWidth) {
     double height = contextHeight;
     double width = contextWidth;
-    double shotButtonHeight = height / 3;
-    double shotButtonWidth = width / 3;
+    double shotButtonHeight = height / 3.5;
+    double shotButtonWidth = width / 3.5;
     return
       Column(children: [
-        SizedBox(height: height*0.12),
+        SizedBox(height: height*0.1),
         _buildShotCounterRow(),
-        SizedBox(height: height*0.09 ),
+        SizedBox(height: height*0.05 ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
@@ -646,7 +646,7 @@ class _ShotRecordingScreenV3State extends State<ShotRecordingScreenV3> {
             _buildShotButton(_missedConfig, shotButtonHeight, shotButtonWidth),
           ],
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: height*0.08),
         Center(
           child: ElevatedButton(
             onPressed:() {

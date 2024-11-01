@@ -53,6 +53,7 @@ class StatsCoachApp extends StatelessWidget {
           title: 'Stats Coach',
           theme: ThemeData(
             primarySwatch: Colors.blue,
+            fontFamily: 'GolosText'
           ),
           routerConfig: goRouterConfig,
     );
